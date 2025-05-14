@@ -7,9 +7,6 @@
 
 import SwiftUI
 
-
-import SwiftUI
-
 struct TaskListView: View {
     @StateObject private var viewModel = TaskViewModel()
     @State private var showingAddTask = false
@@ -42,7 +39,31 @@ struct TaskListView: View {
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
             }
-
+            .listStyle(PlainListStyle())
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button {
+                        showingAddTask.toggle()
+                    } label: {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.title2)
+                            .foregroundColor(.blue)
+                    }
+                }
+            }
+            .sheet(isPresented: $showingAddTask) {
+                AddTaskView(viewModel: viewModel)
+            }
+            .background(Color(UIColor.systemBackground)) // fundo branco/escuro conforme modo do iOS
         }
     }
 }
+
+struct TaskListView_Previews: PreviewProvider {
+    static var previews: some View {
+        TaskListView()
+    }
+}
+
+
