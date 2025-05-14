@@ -8,42 +8,41 @@
 import SwiftUI
 
 
+import SwiftUI
+
 struct TaskListView: View {
     @StateObject private var viewModel = TaskViewModel()
     @State private var showingAddTask = false
 
     var body: some View {
         NavigationView {
-            ScrollView {
-                LazyVStack(spacing: 16) {
-                    ForEach(viewModel.tasks) { task in
-                        TaskCardView(task: task, onToggle: {
-                            withAnimation(.easeInOut) {
-                                viewModel.toggleCompletion(for: task)
+            List {
+                ForEach($viewModel.tasks) { $task in
+                    TaskCardView(task: $task, onToggle: {
+                        withAnimation(.easeInOut) {
+                            task.isCompleted.toggle()
+                            if task.isCompleted {
+                                task.progress = 1.0
                             }
-                        })
-                        .padding(.horizontal)
+                        }
+                    })
+                    .environmentObject(viewModel)
+                    .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                        Button(role: .destructive) {
+                            if let index = viewModel.tasks.firstIndex(where: { $0.id == task.id }) {
+                                withAnimation {
+                                    viewModel.tasks.remove(at: index)
+                                }
+                            }
+                        } label: {
+                            Label("Excluir", systemImage: "trash")
+                        }
                     }
                 }
-                .padding(.top)
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
             }
-            .navigationTitle("📋 Minhas Tarefas")
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button(action: {
-                        showingAddTask.toggle()
-                    }) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.title2)
-                            .foregroundColor(.blue)
-                    }
-                }
-            }
-            .sheet(isPresented: $showingAddTask) {
-                AddTaskView(viewModel: viewModel)
-            }
+
         }
-    
-        .environmentObject(viewModel)
     }
 }

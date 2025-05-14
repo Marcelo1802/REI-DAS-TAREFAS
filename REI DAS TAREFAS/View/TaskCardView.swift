@@ -9,21 +9,21 @@ import SwiftUI
 
 struct TaskCardView: View {
     @EnvironmentObject var viewModel: TaskViewModel
-    let task: Task
+    @Binding var task: Task
     let onToggle: () -> Void
     @State private var isExpanded = false
 
     private var priorityBaseColor: Color {
         switch task.priority {
-        case .alta: return .red.opacity(0.2)
-        case .media: return .yellow.opacity(0.2)
-        case .baixa: return .blue.opacity(0.2)
+        case .alta: return .red
+        case .media: return .yellow
+        case .baixa: return .blue
         }
     }
 
     var body: some View {
         ZStack(alignment: .leading) {
-            priorityBaseColor
+            priorityBaseColor.opacity(0.4)
 
             GeometryReader { geo in
                 Rectangle()
@@ -35,7 +35,15 @@ struct TaskCardView: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Button(action: onToggle) {
+                    Button(action: {
+                        onToggle()
+                        // Se marcar a tarefa como concluída, o progresso vai para 100%
+                        if task.isCompleted {
+                            task.progress = 1.0
+                        } else {
+                            task.progress = 0.0 // Se desmarcar, o progresso vai para 0%
+                        }
+                    }) {
                         Image(systemName: task.isCompleted ? "checkmark.circle.fill" : "circle")
                             .font(.title2)
                             .foregroundColor(task.isCompleted ? .green : .gray)
@@ -69,14 +77,19 @@ struct TaskCardView: View {
                             .font(.caption)
                             .foregroundColor(.secondary)
 
-                    
                         Slider(
                             value: Binding(
-                                get: {
-                                    task.progress
-                                },
+                                get: { task.progress },
                                 set: { newValue in
-                                    viewModel.updateProgress(for: task, to: newValue)
+                                    task.progress = newValue
+                                    // Se o progresso chegar a 100%, marcar como concluído
+                                    if newValue == 1.0 {
+                                        task.isCompleted = true
+                                    } else if newValue == 0.0 {
+                                        task.isCompleted = false // Se o slider for 0%, a tarefa não está concluída
+                                    } else {
+                                        task.isCompleted = false
+                                    }
                                 }
                             ),
                             in: 0...1
@@ -90,12 +103,7 @@ struct TaskCardView: View {
         }
         .cornerRadius(16)
         .shadow(color: .black.opacity(0.05), radius: 4, x: 0, y: 4)
-        .padding(.horizontal)
         .frame(maxWidth: .infinity)
     }
 }
-
-
-
-
 
