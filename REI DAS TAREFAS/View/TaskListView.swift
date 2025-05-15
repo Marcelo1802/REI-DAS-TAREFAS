@@ -1,5 +1,5 @@
 //
-//  ReiHome.swift
+//  TaskListView.swift
 //  REI DAS TAREFAS
 //
 //  Created by marcelo jose guimaraes junior on 14/05/25.
@@ -20,7 +20,43 @@ struct TaskListView: View {
                 Divider().padding(.top).padding(.horizontal)
                 CalendarView(selectedDate: $selectedDate)
                 Divider().padding(.top, 10).padding(.bottom, 20).padding(.horizontal)
-                TaskListViewContent(viewModel: viewModel, selectedTask: $selectedTask)
+
+                // Lista apenas tarefas da data selecionada
+                List {
+                    ForEach($viewModel.tasks.filter {
+                        Calendar.current.isDate($0.wrappedValue.date, inSameDayAs: selectedDate)
+                    }) { $task in
+                        TaskCardView(task: $task, onToggle: {
+                            withAnimation(.easeInOut) {
+                                task.isCompleted.toggle()
+                                task.progress = task.isCompleted ? 1.0 : 0.0
+                            }
+                        })
+                        .environmentObject(viewModel)
+                        .swipeActions(edge: .leading, allowsFullSwipe: true) {
+                            Button(role: .destructive) {
+                                if let index = viewModel.tasks.firstIndex(where: { $0.id == task.id }) {
+                                    withAnimation {
+                                        viewModel.tasks.remove(at: index)
+                                    }
+                                }
+                            } label: {
+                                Label("Excluir", systemImage: "trash")
+                            }
+                        }
+                        .swipeActions(edge: .trailing) {
+                            Button {
+                                selectedTask = task
+                            } label: {
+                                Label("Editar", systemImage: "gearshape")
+                            }
+                            .tint(.gray)
+                        }
+                    }
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+                }
+                .listStyle(PlainListStyle())
             }
             .background(Color(UIColor.systemGroupedBackground))
             .sheet(isPresented: $showingAddTask) {
@@ -71,7 +107,7 @@ struct CalendarView: View {
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 12) {
-                ForEach(generateWeekDates(), id: \.self) { date in
+                ForEach(generateDates(days: 14), id: \.self) { date in
                     let isSelected = Calendar.current.isDate(date, inSameDayAs: selectedDate)
                     VStack(spacing: 4) {
                         Text(shortWeekday(from: date))
@@ -95,12 +131,10 @@ struct CalendarView: View {
         }
     }
 
-    private func generateWeekDates() -> [Date] {
+    private func generateDates(days: Int) -> [Date] {
         let calendar = Calendar.current
-        guard let startOfWeek = calendar.date(from: calendar.dateComponents([.yearForWeekOfYear, .weekOfYear], from: Date())) else {
-            return []
-        }
-        return (0..<7).compactMap { calendar.date(byAdding: .day, value: $0, to: startOfWeek) }
+        let today = calendar.startOfDay(for: Date())
+        return (0..<days).compactMap { calendar.date(byAdding: .day, value: $0, to: today) }
     }
 
     private func shortWeekday(from date: Date) -> String {
@@ -117,53 +151,14 @@ struct CalendarView: View {
     }
 }
 
-// MARK: - Lista de Tarefas
-struct TaskListViewContent: View {
-    @ObservedObject var viewModel: TaskViewModel
-    @Binding var selectedTask: Task?
-
-    var body: some View {
-        List {
-            ForEach($viewModel.tasks) { $task in
-                TaskCardView(task: $task, onToggle: {
-                    withAnimation(.easeInOut) {
-                        task.isCompleted.toggle()
-                        task.progress = task.isCompleted ? 1.0 : 0.0
-                    }
-                })
-                .environmentObject(viewModel)
-                .swipeActions(edge: .leading, allowsFullSwipe: true) {
-                    Button(role: .destructive) {
-                        if let index = viewModel.tasks.firstIndex(where: { $0.id == task.id }) {
-                            withAnimation {
-                                viewModel.tasks.remove(at: index)
-                            }
-                        }
-                    } label: {
-                        Label("Excluir", systemImage: "trash")
-                    }
-                }
-                .swipeActions(edge: .trailing) {
-                    Button {
-                        selectedTask = task
-                    } label: {
-                        Label("Editar", systemImage: "gearshape")
-                    }
-                    .tint(.gray)
-                }
-            }
-            .listRowSeparator(.hidden)
-            .listRowBackground(Color.clear)
-        }
-        .listStyle(PlainListStyle())
-    }
-}
-
 struct TaskListView_Previews: PreviewProvider {
     static var previews: some View {
         TaskListView()
     }
 }
+
+
+
 
 
 

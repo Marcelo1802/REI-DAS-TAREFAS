@@ -17,16 +17,25 @@ struct Task: Identifiable, Codable {
     var description: String
     var priority: TaskPriority
     var isCompleted: Bool = false
-    var progress: Double = 0.0  // Adicionando a propriedade de progresso
+    var progress: Double = 0.0
+    var date: Date = Calendar.current.startOfDay(for: Date()) 
 
-    init(id: UUID = UUID(), title: String, description: String, priority: TaskPriority, isCompleted: Bool = false, progress: Double = 0.0) {
+    init(id: UUID = UUID(),
+         title: String,
+         description: String,
+         priority: TaskPriority,
+         isCompleted: Bool = false,
+         progress: Double = 0.0,
+         date: Date = Calendar.current.startOfDay(for: Date())) {
         self.id = id
         self.title = title
         self.description = description
         self.priority = priority
         self.isCompleted = isCompleted
         self.progress = progress
+        self.date = date
     }
+
 }
 
 
