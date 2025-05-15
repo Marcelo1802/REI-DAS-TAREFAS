@@ -7,13 +7,15 @@
 
 import SwiftUI
 
+
 struct AddTaskView: View {
     @Environment(\.dismiss) var dismiss
     @ObservedObject var viewModel: TaskViewModel
-    
+
     @State private var taskTitle = ""
     @State private var taskDescription = ""
     @State private var selectedPriority: TaskPriority = .media
+    @State private var selectedDate: Date = Calendar.current.startOfDay(for: Date())
 
     var body: some View {
         NavigationView {
@@ -21,7 +23,7 @@ struct AddTaskView: View {
                 Section(header: Text("Título")) {
                     TextField("Digite o título da tarefa", text: $taskTitle)
                 }
-                
+
                 Section(header: Text("Descrição")) {
                     TextField("Adicione uma descrição...", text: $taskDescription)
                 }
@@ -39,13 +41,22 @@ struct AddTaskView: View {
                     }
                     .pickerStyle(.menu)
                 }
+
+                Section(header: Text("Data")) {
+                    DatePicker("Selecionar data", selection: $selectedDate, displayedComponents: .date)
+                }
             }
             .navigationTitle("Nova Tarefa")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Adicionar") {
                         guard !taskTitle.isEmpty else { return }
-                        viewModel.addTask(title: taskTitle, description: taskDescription, priority: selectedPriority)
+                        viewModel.addTask(
+                            title: taskTitle,
+                            description: taskDescription,
+                            priority: selectedPriority,
+                            date: selectedDate
+                        )
                         dismiss()
                     }
                 }
@@ -66,4 +77,5 @@ struct AddTaskView: View {
         }
     }
 }
+
 
